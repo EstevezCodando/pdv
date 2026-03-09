@@ -3,7 +3,6 @@ package com.pdv.pontovenda.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,7 +25,6 @@ public class Usuario {
 
     @NotBlank(message = "O nome e obrigatorio")
     @Size(min = 3, max = 100, message = "O nome deve ter entre 3 e 100 caracteres")
-    @Pattern(regexp = "^[\\p{L}\\p{N} ._-]+$", message = "O nome possui caracteres nao permitidos")
     @Column(nullable = false, length = 100)
     private String nome;
 

@@ -48,7 +48,9 @@ public class ProdutoService {
     public Produto salvar(Produto produto) {
         validarCodigoBarrasUnico(produto);
         try {
-            return produtoRepository.saveAndFlush(produto);
+            Produto produtoSalvo = produtoRepository.save(produto);
+            produtoRepository.flush();
+            return produtoSalvo;
         } catch (DataIntegrityViolationException ex) {
             throw traduzirViolacaoDeIntegridade(produto.getCodigoBarras());
         }
@@ -62,7 +64,9 @@ public class ProdutoService {
         aplicarAlteracoes(produtoAtualizado, existente);
 
         try {
-            return produtoRepository.saveAndFlush(existente);
+            Produto produtoSalvo = produtoRepository.save(existente);
+            produtoRepository.flush();
+            return produtoSalvo;
         } catch (DataIntegrityViolationException ex) {
             throw traduzirViolacaoDeIntegridade(existente.getCodigoBarras());
         }

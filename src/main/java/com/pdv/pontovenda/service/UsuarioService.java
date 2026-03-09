@@ -48,7 +48,9 @@ public class UsuarioService {
     public Usuario salvar(Usuario usuario) {
         validarEmailUnico(usuario.getEmail());
         try {
-            return usuarioRepository.saveAndFlush(usuario);
+            Usuario usuarioSalvo = usuarioRepository.save(usuario);
+            usuarioRepository.flush();
+            return usuarioSalvo;
         } catch (DataIntegrityViolationException ex) {
             throw traduzirViolacaoDeIntegridade(usuario.getEmail());
         }
@@ -62,7 +64,9 @@ public class UsuarioService {
         aplicarAlteracoes(usuarioAtualizado, existente);
 
         try {
-            return usuarioRepository.saveAndFlush(existente);
+            Usuario usuarioSalvo = usuarioRepository.save(existente);
+            usuarioRepository.flush();
+            return usuarioSalvo;
         } catch (DataIntegrityViolationException ex) {
             throw traduzirViolacaoDeIntegridade(existente.getEmail());
         }

@@ -3,6 +3,7 @@ package com.pdv.pontovenda.controller;
 import com.pdv.pontovenda.config.ValidadorDeIdentificador;
 import com.pdv.pontovenda.entity.Usuario;
 import com.pdv.pontovenda.service.UsuarioService;
+import com.pdv.pontovenda.validation.ValidadorEntradaSegura;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,14 @@ public class UsuarioApiController {
 
     private final UsuarioService usuarioService;
     private final ValidadorDeIdentificador validadorDeIdentificador;
+    private final ValidadorEntradaSegura validadorEntradaSegura;
 
     public UsuarioApiController(UsuarioService usuarioService,
-                                ValidadorDeIdentificador validadorDeIdentificador) {
+                                ValidadorDeIdentificador validadorDeIdentificador,
+                                ValidadorEntradaSegura validadorEntradaSegura) {
         this.usuarioService = usuarioService;
         this.validadorDeIdentificador = validadorDeIdentificador;
+        this.validadorEntradaSegura = validadorEntradaSegura;
     }
 
     @GetMapping
@@ -43,6 +47,7 @@ public class UsuarioApiController {
 
     @PostMapping
     public ResponseEntity<Usuario> criar(@Valid @RequestBody Usuario usuario) {
+        validadorEntradaSegura.validarNomeUsuario(usuario.getNome());
         Usuario salvo = usuarioService.salvar(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
     }
@@ -50,6 +55,7 @@ public class UsuarioApiController {
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
         validadorDeIdentificador.validarPositivo(id, "ID");
+        validadorEntradaSegura.validarNomeUsuario(usuario.getNome());
         Usuario atualizado = usuarioService.atualizar(id, usuario);
         return ResponseEntity.ok(atualizado);
     }
