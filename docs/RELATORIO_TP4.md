@@ -1,37 +1,27 @@
-# TP4 - Relatorio de refatoracao, integracao e automacao
+# Relatório TP4
 
-## Visao geral
+## Objetivo da refatoração
 
-O projeto foi preparado para operar como uma aplicacao unica, com os modulos de usuarios e produtos compartilhando convencoes de validacao, componentes reutilizaveis e uma visao integrada do estado operacional do sistema.
+A refatoração foi direcionada pelos requisitos do TP4 e pelos requisitos não funcionais de clareza, extensibilidade, cobertura mínima, previsibilidade do build e facilidade de depuração.
 
-## Melhorias de refatoracao aplicadas
+## Limpeza estrutural aplicada
 
-Foram removidos pontos de duplicacao de regra nas APIs REST por meio da classe `ValidadorDeIdentificador`, que centraliza a validacao fail early de IDs.
+A principal dualidade removida foi a coexistência entre Maven e Gradle. O projeto passou a ter um único caminho oficial de build, teste e execução. Também foram removidos artefatos gerados, caches locais e documentação conflitante.
 
-Os perfis aceitos para usuario foram centralizados em `PerfisUsuario`, evitando repeticao literal de valores e risco de divergencia entre telas.
+## Refatorações relevantes
 
-Os services de usuario e produto receberam metodos de contagem e extracao de comportamento repetido de atualizacao para metodos privados menores, deixando a regra mais legivel e testavel.
+As validações transversais de identificadores foram centralizadas em `ValidadorDeIdentificador`, reduzindo duplicação nos endpoints REST. Os perfis de usuário foram centralizados em `PerfisUsuario`, reduzindo string literal espalhada na camada web. O `ProdutoController` passou a usar a mesma estratégia de preparação de formulário já adotada no módulo de usuários, reduzindo repetição e deixando o fluxo MVC mais consistente.
 
-O `HomeController` deixou de ser apenas um redirecionador visual e passou a consumir `ResumoIntegradoService`, tornando a home uma tela real de integracao entre os dois sistemas.
+Os serviços de usuário e produto continuam concentrando regra de negócio e persistência coordenada, mantendo controllers finos e testáveis. O `ResumoIntegradoService` permanece como ponto explícito de integração entre os dois módulos, evitando que controllers ou templates façam composição de dados diretamente.
 
-Foi criado o endpoint `GET /api/integracao/resumo`, que consolida informacoes de usuarios e produtos em um unico contrato REST para uso futuro por dashboards, automacoes ou outros modulos.
+## Integração dos sistemas
 
-## Cobertura e testes
+A integração foi consolidada por meio da home com resumo operacional e pelo endpoint `GET /api/integracao/resumo`. Assim, os módulos deixam de existir como CRUDs isolados e passam a compor uma aplicação única com visão integrada.
 
-Foram adicionados testes direcionados para a consolidacao do resumo integrado e para o endpoint/controller responsavel pela exposicao desse resumo.
+## Testes e cobertura
 
-A cobertura minima de 85% foi configurada no Gradle por meio do JaCoCo com falha automatica do pipeline quando o limite nao for atingido.
-
-Os testes Selenium foram separados em uma tarefa dedicada para reduzir fragilidade da pipeline principal e preservar previsibilidade no CI.
-
-## Automacao CI/CD
-
-A pipeline principal executa `clean check`, validando compilacao, testes e cobertura.
-
-O relatorio HTML do JaCoCo e publicado como artefato para facilitar auditoria e depuracao.
-
-Os testes end-to-end com Selenium ficaram em workflow separado, disparado manualmente, para evitar falsos negativos recorrentes em validacoes de PR.
+A cobertura mínima de 85% foi mantida no Gradle com JaCoCo. Os logs de teste foram configurados para mostrar falhas com mais contexto, o que atende ao requisito de erros compreensíveis no CI. Os testes Selenium foram mantidos em tarefa e workflow separados para preservar estabilidade na esteira principal.
 
 ## Runners
 
-Foi adotado `ubuntu-latest` hospedado pelo GitHub por simplicidade operacional, previsibilidade e menor custo de manutencao. Para este projeto, runner auto-hospedado so faria sentido se houvesse dependencia obrigatoria de navegador customizado, banco persistente especifico ou rede interna.
+Foi mantido `ubuntu-latest` hospedado pelo GitHub por simplicidade operacional, baixo custo de manutenção e compatibilidade suficiente para este projeto. A adoção de runner auto-hospedado não se justifica pelos requisitos atuais.

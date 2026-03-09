@@ -1,59 +1,44 @@
-# Manual de execucao
+# Manual de execução
 
-## Executar aplicacao integrada localmente
+## Como rodar a aplicação integrada
 
-Com Maven:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Com Gradle:
+Na raiz do projeto, execute:
 
 ```bash
 gradle bootRun
 ```
 
-A aplicacao sobe com a home integrada em `http://localhost:8080/`.
+A aplicação sobe em `http://localhost:8080` com o perfil padrão H2 para execução local.
 
-## Principais rotas
+## Como executar os testes
 
-Interface web:
-
-- `/`
-- `/usuarios`
-- `/produtos`
-
-API REST:
-
-- `/api/usuarios`
-- `/api/produtos`
-- `/api/integracao/resumo`
-
-## Executar testes
-
-Testes principais com cobertura:
+Para build, testes e verificação de cobertura:
 
 ```bash
 gradle clean check
 ```
 
-Testes end-to-end com Selenium:
+Para executar apenas os testes end-to-end:
 
 ```bash
 gradle seleniumTest
 ```
 
-## Interpretacao dos workflows
+## Como interpretar os workflows do GitHub Actions
 
-O workflow `CI` executa build, testes e verificacao de cobertura. Se falhar, a aba Actions mostrara exatamente a etapa quebrada.
+O workflow `CI` executa compilação, suíte principal de testes e verificação de cobertura. Quando falha, os logs do Gradle mostram os testes quebrados com stack trace completo, e os relatórios HTML de testes e cobertura são publicados como artefatos.
 
-O workflow `E2E Selenium` foi isolado e deve ser executado quando houver necessidade de validar a interface completa com navegador.
+O workflow `E2E Selenium` fica separado e com disparo manual. Essa decisão reduz ruído no pipeline principal e preserva previsibilidade na validação de branches e pull requests.
 
-## Evidencias de cobertura
+## Runners adotados
 
-Apos a execucao do Gradle, o relatorio HTML do JaCoCo fica em:
+Foi adotado `ubuntu-latest` hospedado pelo GitHub. Para este projeto, runner auto-hospedado não traz ganho proporcional, porque não há dependência obrigatória de rede privada, banco persistente dedicado ou infraestrutura específica do time.
+
+## Evidências geradas
+
+Os relatórios locais ficam em:
 
 ```text
-build/reports/jacoco/test/html/index.html
+build/reports/tests/test
+build/reports/jacoco/test/html
 ```

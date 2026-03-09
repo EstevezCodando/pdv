@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Configurar Gradle
+      - name: Configurar Gradle 8.12
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.12'
@@ -26,4 +26,11 @@ jobs:
       - name: Executar testes Selenium
         env:
           CI: 'true'
-        run: gradle seleniumTest --stacktrace
+        run: gradle seleniumTest --stacktrace --warning-mode all
+
+      - name: Publicar relatorio dos testes Selenium
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes-selenium
+          path: build/reports/tests/seleniumTest

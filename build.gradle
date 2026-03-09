@@ -49,6 +49,14 @@ tasks.named('test') {
     useJUnitPlatform()
     exclude '**/*SeleniumTest.class'
     finalizedBy tasks.named('jacocoTestReport')
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
 }
 
 tasks.register('seleniumTest', Test) {
@@ -57,6 +65,14 @@ tasks.register('seleniumTest', Test) {
     useJUnitPlatform()
     include '**/*SeleniumTest.class'
     shouldRunAfter tasks.named('test')
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
 }
 
 jacoco {
