@@ -1,5 +1,6 @@
 package com.pdv.pontovenda.controller;
 
+import com.pdv.pontovenda.config.ValidadorDeIdentificador;
 import com.pdv.pontovenda.entity.Produto;
 import com.pdv.pontovenda.service.ProdutoService;
 import jakarta.validation.Valid;
@@ -19,9 +20,12 @@ import java.util.List;
 public class ProdutoApiController {
 
     private final ProdutoService produtoService;
+    private final ValidadorDeIdentificador validadorDeIdentificador;
 
-    public ProdutoApiController(ProdutoService produtoService) {
+    public ProdutoApiController(ProdutoService produtoService,
+                                ValidadorDeIdentificador validadorDeIdentificador) {
         this.produtoService = produtoService;
+        this.validadorDeIdentificador = validadorDeIdentificador;
     }
 
     @GetMapping
@@ -32,9 +36,7 @@ public class ProdutoApiController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         Produto produto = produtoService.buscarPorId(id);
         return ResponseEntity.ok(produto);
     }
@@ -47,18 +49,14 @@ public class ProdutoApiController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Produto> atualizar(@PathVariable Long id, @Valid @RequestBody Produto produto) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         Produto atualizado = produtoService.atualizar(id, produto);
         return ResponseEntity.ok(atualizado);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         produtoService.excluir(id);
         return ResponseEntity.noContent().build();
     }

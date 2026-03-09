@@ -1,5 +1,6 @@
 package com.pdv.pontovenda.controller;
 
+import com.pdv.pontovenda.config.ValidadorDeIdentificador;
 import com.pdv.pontovenda.entity.Usuario;
 import com.pdv.pontovenda.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -19,9 +20,12 @@ import java.util.List;
 public class UsuarioApiController {
 
     private final UsuarioService usuarioService;
+    private final ValidadorDeIdentificador validadorDeIdentificador;
 
-    public UsuarioApiController(UsuarioService usuarioService) {
+    public UsuarioApiController(UsuarioService usuarioService,
+                                ValidadorDeIdentificador validadorDeIdentificador) {
         this.usuarioService = usuarioService;
+        this.validadorDeIdentificador = validadorDeIdentificador;
     }
 
     @GetMapping
@@ -32,10 +36,7 @@ public class UsuarioApiController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
-        // Fail early: rejeita IDs invalidos antes de acessar o banco
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         Usuario usuario = usuarioService.buscarPorId(id);
         return ResponseEntity.ok(usuario);
     }
@@ -48,18 +49,14 @@ public class UsuarioApiController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         Usuario atualizado = usuarioService.atualizar(id, usuario);
         return ResponseEntity.ok(atualizado);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID deve ser um numero positivo");
-        }
+        validadorDeIdentificador.validarPositivo(id, "ID");
         usuarioService.excluir(id);
         return ResponseEntity.noContent().build();
     }

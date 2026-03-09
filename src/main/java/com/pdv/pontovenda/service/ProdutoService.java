@@ -28,6 +28,16 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
+    public long contarTodos() {
+        return produtoRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long contarAtivos() {
+        return produtoRepository.countByAtivoTrue();
+    }
+
+    @Transactional(readOnly = true)
     public Produto buscarPorId(Long id) {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto", id));
@@ -44,13 +54,7 @@ public class ProdutoService {
         Produto existente = buscarPorId(id);
 
         validarCodigoBarrasUnicoParaAtualizacao(produtoAtualizado.getCodigoBarras(), id);
-
-        existente.setNome(produtoAtualizado.getNome());
-        existente.setDescricao(produtoAtualizado.getDescricao());
-        existente.setPreco(produtoAtualizado.getPreco());
-        existente.setQuantidadeEstoque(produtoAtualizado.getQuantidadeEstoque());
-        existente.setCodigoBarras(produtoAtualizado.getCodigoBarras());
-        existente.setAtivo(produtoAtualizado.getAtivo());
+        aplicarAlteracoes(produtoAtualizado, existente);
 
         return produtoRepository.save(existente);
     }
@@ -61,21 +65,28 @@ public class ProdutoService {
         produtoRepository.delete(produto);
     }
 
+    private void aplicarAlteracoes(Produto origem, Produto destino) {
+        destino.setNome(origem.getNome());
+        destino.setDescricao(origem.getDescricao());
+        destino.setPreco(origem.getPreco());
+        destino.setQuantidadeEstoque(origem.getQuantidadeEstoque());
+        destino.setCodigoBarras(origem.getCodigoBarras());
+        destino.setAtivo(origem.getAtivo());
+    }
+
     private void validarCodigoBarrasUnico(Produto produto) {
-        if (produto.getCodigoBarras() != null && !produto.getCodigoBarras().isBlank()) {
-            if (produtoRepository.existsByCodigoBarras(produto.getCodigoBarras())) {
-                throw new RegraDeNegocioException(
-                        "Ja existe um produto com o codigo de barras: " + produto.getCodigoBarras());
-            }
+        String codigoBarras = produto.getCodigoBarras();
+        if (codigoBarras != null && !codigoBarras.isBlank() && produtoRepository.existsByCodigoBarras(codigoBarras)) {
+            throw new RegraDeNegocioException(
+                    "Ja existe um produto com o codigo de barras: " + codigoBarras);
         }
     }
 
     private void validarCodigoBarrasUnicoParaAtualizacao(String codigoBarras, Long idAtual) {
-        if (codigoBarras != null && !codigoBarras.isBlank()) {
-            if (produtoRepository.existsByCodigoBarrasAndIdNot(codigoBarras, idAtual)) {
-                throw new RegraDeNegocioException(
-                        "Ja existe um produto com o codigo de barras: " + codigoBarras);
-            }
+        if (codigoBarras != null && !codigoBarras.isBlank()
+                && produtoRepository.existsByCodigoBarrasAndIdNot(codigoBarras, idAtual)) {
+            throw new RegraDeNegocioException(
+                    "Ja existe um produto com o codigo de barras: " + codigoBarras);
         }
     }
 }

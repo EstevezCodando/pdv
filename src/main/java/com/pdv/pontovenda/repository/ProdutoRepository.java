@@ -17,4 +17,6 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     boolean existsByCodigoBarras(String codigoBarras);
 
     boolean existsByCodigoBarrasAndIdNot(String codigoBarras, Long id);
+
+    long countByAtivoTrue();
 }

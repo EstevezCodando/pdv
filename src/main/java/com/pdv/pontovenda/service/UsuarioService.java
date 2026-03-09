@@ -22,76 +22,63 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    /**
-     * Lista todos os usuarios cadastrados.
-     */
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
 
-    /**
-     * Busca um usuario pelo ID.
-     * @throws RecursoNaoEncontradoException se nao encontrado
-     */
+    @Transactional(readOnly = true)
+    public long contarTodos() {
+        return usuarioRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long contarAtivos() {
+        return usuarioRepository.countByAtivoTrue();
+    }
+
     @Transactional(readOnly = true)
     public Usuario buscarPorId(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario", id));
     }
 
-    /**
-     * Salva um novo usuario apos validar regras de negocio.
-     * @throws RegraDeNegocioException se o e-mail ja estiver cadastrado
-     */
     @Transactional
     public Usuario salvar(Usuario usuario) {
-        validarEmailUnico(usuario);
+        validarEmailUnico(usuario.getEmail());
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Atualiza um usuario existente.
-     * @throws RecursoNaoEncontradoException se o usuario nao existir
-     * @throws RegraDeNegocioException se o novo e-mail conflitar com outro usuario
-     */
     @Transactional
     public Usuario atualizar(Long id, Usuario usuarioAtualizado) {
         Usuario existente = buscarPorId(id);
 
         validarEmailUnicoParaAtualizacao(usuarioAtualizado.getEmail(), id);
-
-        existente.setNome(usuarioAtualizado.getNome());
-        existente.setEmail(usuarioAtualizado.getEmail());
-        existente.setSenha(usuarioAtualizado.getSenha());
-        existente.setPerfil(usuarioAtualizado.getPerfil());
-        existente.setAtivo(usuarioAtualizado.getAtivo());
+        aplicarAlteracoes(usuarioAtualizado, existente);
 
         return usuarioRepository.save(existente);
     }
 
-    /**
-     * Remove um usuario pelo ID.
-     * @throws RecursoNaoEncontradoException se o usuario nao existir
-     */
     @Transactional
     public void excluir(Long id) {
         Usuario usuario = buscarPorId(id);
         usuarioRepository.delete(usuario);
     }
 
-    /**
-     * Valida que o e-mail nao esta cadastrado (para criacao).
-     */
-    private void validarEmailUnico(Usuario usuario) {
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + usuario.getEmail());
+    private void aplicarAlteracoes(Usuario origem, Usuario destino) {
+        destino.setNome(origem.getNome());
+        destino.setEmail(origem.getEmail());
+        destino.setSenha(origem.getSenha());
+        destino.setPerfil(origem.getPerfil());
+        destino.setAtivo(origem.getAtivo());
+    }
+
+    private void validarEmailUnico(String email) {
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + email);
         }
     }
 
-    /**
-     * Valida que o e-mail nao pertence a outro usuario (para atualizacao).
-     */
     private void validarEmailUnicoParaAtualizacao(String email, Long idAtual) {
         if (usuarioRepository.existsByEmailAndIdNot(email, idAtual)) {
             throw new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + email);

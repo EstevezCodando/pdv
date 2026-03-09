@@ -327,6 +327,33 @@ Nenhuma resposta de erro ao usuário contém: stack traces, nomes de classes Jav
 
 ---
 
+## Requisitos Atendidos
+
+| Requisito                                                      | Status |
+|----------------------------------------------------------------|--------|
+| Interface web com CRUD completo (MVC + API REST)               | ✅     |
+| Interface responsiva e intuitiva (Bootstrap 5)                 | ✅     |
+| Navegação entre páginas com rotas claras                       | ✅     |
+| Formulários, botões, tabelas de listagem                       | ✅     |
+| Selenium WebDriver automatizando interação web                 | ✅     |
+| Testes parametrizados com diferentes cenários                  | ✅     |
+| Padrão Page Object Model (POM) aplicado                        | ✅     |
+| Validação de mensagens e comportamentos de erro                | ✅     |
+| Testes negativos (falhas, entradas inválidas)                  | ✅     |
+| Fuzz testing (XSS, SQL injection, inputs aleatórios)           | ✅     |
+| Simulação de falhas (sobrecarga, concorrência, dupla exclusão) | ✅     |
+| Fail early (validação antecipada de entradas)                  | ✅     |
+| Fail gracefully (respostas controladas a erros)                | ✅     |
+| Mensagens de erro seguras (sem exposição de info interna)      | ✅     |
+| Testes de boundary values (limites mín/máx de campos)          | ✅     |
+| Cobertura mínima de 85% (JaCoCo)                              | ✅     |
+| Clean Code e boas práticas de nomeação                         | ✅     |
+| Tratamento de erros com exceções tipadas                       | ✅     |
+| Tipos de dados específicos (BigDecimal para preço)             | ✅     |
+| Código compacto, modular e coeso                               | ✅     |
+| Separação de responsabilidades (Controller/Service/Repository) | ✅     |
+
+---
 
 ## Troubleshooting
 
@@ -342,3 +369,6 @@ Nenhuma resposta de erro ao usuário contém: stack traces, nomes de classes Jav
 - Verifique: `java -version` (deve ser 21+)
 - Defina `JAVA_HOME` apontando para o JDK 21
 
+**Testes Selenium falham em CI/CD**
+- Garanta que Chrome está instalado no ambiente CI
+- Os testes já rodam em modo headless (`--headless=new`)
