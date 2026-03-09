@@ -1,16 +1,21 @@
 package com.pdv.pontovenda.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,42 +31,22 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String MENSAGEM_ERRO_GENERICO = "Ocorreu um erro interno. Tente novamente mais tarde.";
+    private static final String MENSAGEM_CORPO_INVALIDO = "Corpo da requisicao invalido.";
+    private static final String MENSAGEM_CONTEUDO_NAO_SUPORTADO = "Content-Type nao suportado para esta operacao.";
+    private static final String MENSAGEM_METODO_NAO_SUPORTADO = "Metodo HTTP nao suportado para este endpoint.";
 
-    /** Recurso não encontrado (404) — entidade de negocio. */
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public Object handleRecursoNaoEncontrado(RecursoNaoEncontradoException ex, HttpServletRequest request) {
         logger.warn("Recurso nao encontrado: {}", ex.getMessage());
-
-        if (isApiRequest(request)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(criarErroApi(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
-        }
-
-        ModelAndView mv = new ModelAndView("error");
-        mv.addObject("status", 404);
-        mv.addObject("mensagem", ex.getMessage());
-        mv.setStatus(HttpStatus.NOT_FOUND);
-        return mv;
+        return responder(request, HttpStatus.NOT_FOUND, ex.getMessage(), "Pagina nao encontrada");
     }
 
-    /** Violação de regra de negocio (422). */
     @ExceptionHandler(RegraDeNegocioException.class)
     public Object handleRegraDeNegocio(RegraDeNegocioException ex, HttpServletRequest request) {
         logger.warn("Regra de negocio violada: {}", ex.getMessage());
-
-        if (isApiRequest(request)) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(criarErroApi(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage()));
-        }
-
-        ModelAndView mv = new ModelAndView("error");
-        mv.addObject("status", 422);
-        mv.addObject("mensagem", ex.getMessage());
-        mv.setStatus(HttpStatus.UNPROCESSABLE_ENTITY);
-        return mv;
+        return responder(request, HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), ex.getMessage());
     }
 
-    /** Erro de validação de campos — @Valid (400). */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
         logger.warn("Erro de validacao: {}", ex.getMessage());
@@ -78,62 +63,71 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(resposta);
     }
 
-    /** Recurso HTTP não encontrado (404) — rota inexistente. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public Object handleMetodoNaoSuportado(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        logger.warn("Metodo nao suportado em {}: {}", request.getRequestURI(), ex.getMethod());
+        return responder(request, HttpStatus.METHOD_NOT_ALLOWED, MENSAGEM_METODO_NAO_SUPORTADO,
+                "Operacao nao suportada");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public Object handleMediaTypeNaoSuportado(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        logger.warn("Content-Type nao suportado em {}", request.getRequestURI());
+        return responder(request, HttpStatus.UNSUPPORTED_MEDIA_TYPE, MENSAGEM_CONTEUDO_NAO_SUPORTADO,
+                "Conteudo da requisicao nao suportado");
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Object handleMensagemNaoLegivel(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        logger.warn("Corpo de requisicao invalido em {}", request.getRequestURI());
+        return responder(request, HttpStatus.BAD_REQUEST, MENSAGEM_CORPO_INVALIDO,
+                "Requisicao invalida");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public Object handleTipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        logger.warn("Tipo de argumento invalido em {}: {}", request.getRequestURI(), ex.getName());
+        return responder(request, HttpStatus.BAD_REQUEST, "Parametro invalido.", "Parametro invalido");
+    }
+
     @ExceptionHandler(NoResourceFoundException.class)
     public Object handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
         logger.warn("Rota nao encontrada: {}", request.getRequestURI());
-
-        if (isApiRequest(request)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(criarErroApi(HttpStatus.NOT_FOUND.value(), "Recurso nao encontrado"));
-        }
-
-        ModelAndView mv = new ModelAndView("error");
-        mv.addObject("status", 404);
-        mv.addObject("mensagem", "Pagina nao encontrada");
-        mv.setStatus(HttpStatus.NOT_FOUND);
-        return mv;
+        return responder(request, HttpStatus.NOT_FOUND, "Recurso nao encontrado", "Pagina nao encontrada");
     }
 
-    /** Argumento ilegal (400) — fail early nos services. */
     @ExceptionHandler(IllegalArgumentException.class)
     public Object handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         logger.warn("Argumento invalido: {}", ex.getMessage());
-
-        if (isApiRequest(request)) {
-            return ResponseEntity.badRequest()
-                    .body(criarErroApi(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
-        }
-
-        ModelAndView mv = new ModelAndView("error");
-        mv.addObject("status", 400);
-        mv.addObject("mensagem", "Requisicao invalida: " + ex.getMessage());
-        mv.setStatus(HttpStatus.BAD_REQUEST);
-        return mv;
+        return responder(request, HttpStatus.BAD_REQUEST, ex.getMessage(), "Requisicao invalida: " + ex.getMessage());
     }
 
-    /**
-     * Captura QUALQUER exceção não prevista — fail gracefully.
-     * Registra o erro internamente (log) mas retorna mensagem genérica ao usuário,
-     * sem expor stack traces, nomes de classes ou informações do servidor.
-     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public Object handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        logger.warn("Violacao de integridade em {}", request.getRequestURI());
+        return responder(request, HttpStatus.UNPROCESSABLE_ENTITY,
+                "Nao foi possivel concluir a operacao com os dados informados.",
+                "Nao foi possivel concluir a operacao com os dados informados.");
+    }
+
     @ExceptionHandler(Exception.class)
     public Object handleErroGenerico(Exception ex, HttpServletRequest request) {
         logger.error("Erro inesperado em {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return responder(request, HttpStatus.INTERNAL_SERVER_ERROR, MENSAGEM_ERRO_GENERICO, MENSAGEM_ERRO_GENERICO);
+    }
 
+    private Object responder(HttpServletRequest request, HttpStatus status, String mensagemApi, String mensagemMvc) {
         if (isApiRequest(request)) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(criarErroApi(HttpStatus.INTERNAL_SERVER_ERROR.value(), MENSAGEM_ERRO_GENERICO));
+            return ResponseEntity.status(status).body(criarErroApi(status.value(), mensagemApi));
         }
 
         ModelAndView mv = new ModelAndView("error");
-        mv.addObject("status", 500);
-        mv.addObject("mensagem", MENSAGEM_ERRO_GENERICO);
-        mv.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        mv.addObject("status", status.value());
+        mv.addObject("mensagem", mensagemMvc);
+        mv.setStatus(status);
         return mv;
     }
 
-    /** Verifica se a requisição espera JSON (API REST) ou HTML (MVC). */
     private boolean isApiRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         String accept = request.getHeader("Accept");
@@ -141,7 +135,6 @@ public class GlobalExceptionHandler {
                 || (accept != null && accept.contains("application/json"));
     }
 
-    /** Monta corpo padrao de erro para respostas API. */
     private Map<String, Object> criarErroApi(int status, String mensagem) {
         Map<String, Object> erro = new HashMap<>();
         erro.put("status", status);

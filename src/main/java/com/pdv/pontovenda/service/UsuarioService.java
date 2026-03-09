@@ -4,6 +4,7 @@ import com.pdv.pontovenda.entity.Usuario;
 import com.pdv.pontovenda.exception.RecursoNaoEncontradoException;
 import com.pdv.pontovenda.exception.RegraDeNegocioException;
 import com.pdv.pontovenda.repository.UsuarioRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +47,11 @@ public class UsuarioService {
     @Transactional
     public Usuario salvar(Usuario usuario) {
         validarEmailUnico(usuario.getEmail());
-        return usuarioRepository.save(usuario);
+        try {
+            return usuarioRepository.saveAndFlush(usuario);
+        } catch (DataIntegrityViolationException ex) {
+            throw traduzirViolacaoDeIntegridade(usuario.getEmail());
+        }
     }
 
     @Transactional
@@ -56,7 +61,11 @@ public class UsuarioService {
         validarEmailUnicoParaAtualizacao(usuarioAtualizado.getEmail(), id);
         aplicarAlteracoes(usuarioAtualizado, existente);
 
-        return usuarioRepository.save(existente);
+        try {
+            return usuarioRepository.saveAndFlush(existente);
+        } catch (DataIntegrityViolationException ex) {
+            throw traduzirViolacaoDeIntegridade(existente.getEmail());
+        }
     }
 
     @Transactional
@@ -75,13 +84,17 @@ public class UsuarioService {
 
     private void validarEmailUnico(String email) {
         if (usuarioRepository.existsByEmail(email)) {
-            throw new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + email);
+            throw traduzirViolacaoDeIntegridade(email);
         }
     }
 
     private void validarEmailUnicoParaAtualizacao(String email, Long idAtual) {
         if (usuarioRepository.existsByEmailAndIdNot(email, idAtual)) {
-            throw new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + email);
+            throw traduzirViolacaoDeIntegridade(email);
         }
+    }
+
+    private RegraDeNegocioException traduzirViolacaoDeIntegridade(String email) {
+        return new RegraDeNegocioException("Ja existe um usuario cadastrado com o e-mail: " + email);
     }
 }

@@ -4,6 +4,7 @@ import com.pdv.pontovenda.entity.Produto;
 import com.pdv.pontovenda.exception.RecursoNaoEncontradoException;
 import com.pdv.pontovenda.exception.RegraDeNegocioException;
 import com.pdv.pontovenda.repository.ProdutoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +47,11 @@ public class ProdutoService {
     @Transactional
     public Produto salvar(Produto produto) {
         validarCodigoBarrasUnico(produto);
-        return produtoRepository.save(produto);
+        try {
+            return produtoRepository.saveAndFlush(produto);
+        } catch (DataIntegrityViolationException ex) {
+            throw traduzirViolacaoDeIntegridade(produto.getCodigoBarras());
+        }
     }
 
     @Transactional
@@ -56,7 +61,11 @@ public class ProdutoService {
         validarCodigoBarrasUnicoParaAtualizacao(produtoAtualizado.getCodigoBarras(), id);
         aplicarAlteracoes(produtoAtualizado, existente);
 
-        return produtoRepository.save(existente);
+        try {
+            return produtoRepository.saveAndFlush(existente);
+        } catch (DataIntegrityViolationException ex) {
+            throw traduzirViolacaoDeIntegridade(existente.getCodigoBarras());
+        }
     }
 
     @Transactional
@@ -77,16 +86,21 @@ public class ProdutoService {
     private void validarCodigoBarrasUnico(Produto produto) {
         String codigoBarras = produto.getCodigoBarras();
         if (codigoBarras != null && !codigoBarras.isBlank() && produtoRepository.existsByCodigoBarras(codigoBarras)) {
-            throw new RegraDeNegocioException(
-                    "Ja existe um produto com o codigo de barras: " + codigoBarras);
+            throw traduzirViolacaoDeIntegridade(codigoBarras);
         }
     }
 
     private void validarCodigoBarrasUnicoParaAtualizacao(String codigoBarras, Long idAtual) {
         if (codigoBarras != null && !codigoBarras.isBlank()
                 && produtoRepository.existsByCodigoBarrasAndIdNot(codigoBarras, idAtual)) {
-            throw new RegraDeNegocioException(
-                    "Ja existe um produto com o codigo de barras: " + codigoBarras);
+            throw traduzirViolacaoDeIntegridade(codigoBarras);
         }
+    }
+
+    private RegraDeNegocioException traduzirViolacaoDeIntegridade(String codigoBarras) {
+        if (codigoBarras == null || codigoBarras.isBlank()) {
+            return new RegraDeNegocioException("Nao foi possivel persistir o produto com os dados informados.");
+        }
+        return new RegraDeNegocioException("Ja existe um produto com o codigo de barras: " + codigoBarras);
     }
 }
