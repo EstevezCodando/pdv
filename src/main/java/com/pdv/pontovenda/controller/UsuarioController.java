@@ -1,5 +1,6 @@
 package com.pdv.pontovenda.controller;
 
+import com.pdv.pontovenda.config.PerfisUsuario;
 import com.pdv.pontovenda.entity.Usuario;
 import com.pdv.pontovenda.exception.RecursoNaoEncontradoException;
 import com.pdv.pontovenda.exception.RegraDeNegocioException;
@@ -15,13 +16,6 @@ import java.util.List;
 
 /**
  * Controller MVC para gerenciamento de usuarios via interface web.
- * Rotas:
- *   GET  /usuarios          -> Listagem
- *   GET  /usuarios/novo     -> Formulario de cadastro
- *   POST /usuarios/salvar   -> Persistir novo usuario
- *   GET  /usuarios/editar/{id} -> Formulario de edicao
- *   POST /usuarios/atualizar/{id} -> Persistir alteracao
- *   GET  /usuarios/excluir/{id}   -> Excluir usuario
  */
 @Controller
 @RequestMapping("/usuarios")
@@ -46,9 +40,7 @@ public class UsuarioController {
 
     @GetMapping("/novo")
     public String novoFormulario(Model model) {
-        model.addAttribute("usuario", new Usuario());
-        model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-        model.addAttribute("acao", "Cadastrar");
+        prepararFormulario(model, new Usuario(), "Cadastrar");
         return VIEW_FORMULARIO;
     }
 
@@ -59,8 +51,7 @@ public class UsuarioController {
                          RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-            model.addAttribute("acao", "Cadastrar");
+            prepararFormulario(model, usuario, "Cadastrar");
             return VIEW_FORMULARIO;
         }
 
@@ -69,9 +60,8 @@ public class UsuarioController {
             redirectAttributes.addFlashAttribute("mensagemSucesso", "Usuario cadastrado com sucesso!");
             return REDIRECT_LISTAGEM;
         } catch (RegraDeNegocioException ex) {
+            prepararFormulario(model, usuario, "Cadastrar");
             model.addAttribute("mensagemErro", ex.getMessage());
-            model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-            model.addAttribute("acao", "Cadastrar");
             return VIEW_FORMULARIO;
         }
     }
@@ -80,9 +70,7 @@ public class UsuarioController {
     public String editarFormulario(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
             Usuario usuario = usuarioService.buscarPorId(id);
-            model.addAttribute("usuario", usuario);
-            model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-            model.addAttribute("acao", "Atualizar");
+            prepararFormulario(model, usuario, "Atualizar");
             return VIEW_FORMULARIO;
         } catch (RecursoNaoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
@@ -98,8 +86,7 @@ public class UsuarioController {
                             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-            model.addAttribute("acao", "Atualizar");
+            prepararFormulario(model, usuario, "Atualizar");
             return VIEW_FORMULARIO;
         }
 
@@ -108,9 +95,8 @@ public class UsuarioController {
             redirectAttributes.addFlashAttribute("mensagemSucesso", "Usuario atualizado com sucesso!");
             return REDIRECT_LISTAGEM;
         } catch (RegraDeNegocioException ex) {
+            prepararFormulario(model, usuario, "Atualizar");
             model.addAttribute("mensagemErro", ex.getMessage());
-            model.addAttribute("perfis", List.of("ADMIN", "OPERADOR"));
-            model.addAttribute("acao", "Atualizar");
             return VIEW_FORMULARIO;
         } catch (RecursoNaoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
@@ -127,5 +113,11 @@ public class UsuarioController {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
         }
         return REDIRECT_LISTAGEM;
+    }
+
+    private void prepararFormulario(Model model, Usuario usuario, String acao) {
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("perfis", PerfisUsuario.DISPONIVEIS);
+        model.addAttribute("acao", acao);
     }
 }

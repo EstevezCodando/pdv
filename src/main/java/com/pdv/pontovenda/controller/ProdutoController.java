@@ -46,8 +46,7 @@ public class ProdutoController {
 
     @GetMapping("/novo")
     public String novoFormulario(Model model) {
-        model.addAttribute("produto", new Produto());
-        model.addAttribute("acao", "Cadastrar");
+        prepararFormulario(model, new Produto(), "Cadastrar");
         return VIEW_FORMULARIO;
     }
 
@@ -58,7 +57,7 @@ public class ProdutoController {
                          RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("acao", "Cadastrar");
+            prepararFormulario(model, produto, "Cadastrar");
             return VIEW_FORMULARIO;
         }
 
@@ -67,8 +66,8 @@ public class ProdutoController {
             redirectAttributes.addFlashAttribute("mensagemSucesso", "Produto cadastrado com sucesso!");
             return REDIRECT_LISTAGEM;
         } catch (RegraDeNegocioException ex) {
+            prepararFormulario(model, produto, "Cadastrar");
             model.addAttribute("mensagemErro", ex.getMessage());
-            model.addAttribute("acao", "Cadastrar");
             return VIEW_FORMULARIO;
         }
     }
@@ -77,8 +76,7 @@ public class ProdutoController {
     public String editarFormulario(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
             Produto produto = produtoService.buscarPorId(id);
-            model.addAttribute("produto", produto);
-            model.addAttribute("acao", "Atualizar");
+            prepararFormulario(model, produto, "Atualizar");
             return VIEW_FORMULARIO;
         } catch (RecursoNaoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
@@ -94,7 +92,7 @@ public class ProdutoController {
                             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("acao", "Atualizar");
+            prepararFormulario(model, produto, "Atualizar");
             return VIEW_FORMULARIO;
         }
 
@@ -103,8 +101,8 @@ public class ProdutoController {
             redirectAttributes.addFlashAttribute("mensagemSucesso", "Produto atualizado com sucesso!");
             return REDIRECT_LISTAGEM;
         } catch (RegraDeNegocioException ex) {
+            prepararFormulario(model, produto, "Atualizar");
             model.addAttribute("mensagemErro", ex.getMessage());
-            model.addAttribute("acao", "Atualizar");
             return VIEW_FORMULARIO;
         } catch (RecursoNaoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
@@ -122,4 +120,9 @@ public class ProdutoController {
         }
         return REDIRECT_LISTAGEM;
     }
+    private void prepararFormulario(Model model, Produto produto, String acao) {
+        model.addAttribute("produto", produto);
+        model.addAttribute("acao", acao);
+    }
 }
+

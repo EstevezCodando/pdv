@@ -26,14 +26,14 @@ class HomeControllerTest {
     @Test
     @DisplayName("O contexto Spring Boot deve carregar com sucesso")
     void contextLoads() {
-        // Se chegar aqui, o contexto carregou corretamente
     }
 
     @Test
-    @DisplayName("GET / - Deve exibir a pagina inicial")
+    @DisplayName("GET / - Deve exibir a pagina inicial com resumo integrado")
     void deveExibirPaginaInicial() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"));
+                .andExpect(view().name("index"))
+                .andExpect(model().attributeExists("resumo"));
     }
 }
