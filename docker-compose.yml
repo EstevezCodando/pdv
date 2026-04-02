@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: pdv-postgres
     environment:
       POSTGRES_DB: pdvdb
       POSTGRES_USER: pdvuser
@@ -9,6 +10,31 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdvuser -d pdvdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pdv-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdv-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: pdvdb
+      DB_USERNAME: pdvuser
+      DB_PASSWORD: pdvpass
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
 
 volumes:
   postgres_data:

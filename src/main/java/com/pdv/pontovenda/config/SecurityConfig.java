@@ -7,26 +7,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
 /**
- * Configuracao de seguranca principal do sistema.
- *
- * Fica desabilitada no profile de teste para evitar que a suite legado de MockMvc
- * passe a falhar por redirecionamento de autenticacao ou bloqueio de CSRF.
+ * Configuracao principal de seguranca.
  */
 @Configuration
 @EnableWebSecurity
 @Profile("!test")
 public class SecurityConfig {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -45,6 +35,9 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/usuarios/**", "/produtos/**").hasRole(PerfisUsuario.ADMIN)
+                        .requestMatchers("/vendas/**", "/api/vendas/**").hasAnyRole(PerfisUsuario.ADMIN, PerfisUsuario.OPERADOR)
+                        .requestMatchers("/api/usuarios/**", "/api/produtos/**", "/api/integracao/**").hasRole(PerfisUsuario.ADMIN)
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers
@@ -57,6 +50,8 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error")
                         .permitAll()
