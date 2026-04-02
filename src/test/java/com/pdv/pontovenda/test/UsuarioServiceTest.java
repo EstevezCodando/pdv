@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,9 @@ class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsuarioService usuarioService;
@@ -105,6 +109,7 @@ class UsuarioServiceTest {
         @DisplayName("Deve salvar usuario com dados validos")
         void deveSalvarUsuarioComDadosValidos() {
             when(usuarioRepository.existsByEmail(anyString())).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hasheado");
             when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioValido);
 
             Usuario resultado = usuarioService.salvar(usuarioValido);
@@ -138,6 +143,7 @@ class UsuarioServiceTest {
 
             when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioValido));
             when(usuarioRepository.existsByEmailAndIdNot("novo@pdv.com", 1L)).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hasheado");
             when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioValido);
 
             Usuario resultado = usuarioService.atualizar(1L, atualizado);

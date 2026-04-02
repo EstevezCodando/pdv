@@ -1,87 +1,156 @@
-# PDV Integrado em Java com Gradle
+# PDV System — Ponto de Venda
 
-Sistema de ponto de venda em Java 21 com Spring Boot, Gradle, H2/MySQL, interface web com Thymeleaf, APIs REST, integracao entre modulos de usuarios, produtos e vendas e pipeline completo de CI/CD.
+Sistema de gerenciamento de ponto de venda desenvolvido como trabalho prático (TP5) na disciplina de Projeto De Bloco
 
-## Principais evolucoes do TP5
+---
 
-- consolidacao do fluxo de vendas com baixa transacional de estoque
-- resumo integrado ampliado com faturamento, ticket medio e total de vendas
-- logs com correlacao por requisicao para facilitar depuracao local e em workflows
-- pipeline com CI principal, seguranca com CodeQL e revisao de dependencias, CD com validacao pos-deploy, Selenium e DAST
-- upload de artefatos de build, testes e cobertura
+## Sobre
 
-## Como executar localmente
+Aplicação web Spring Boot para gerenciamento de usuarios, produtos e registro de vendas, com controle de estoque integrado.
 
-### Requisitos
+Funcionalidades:
+
+- Cadastro e gerenciamento de usuarios com perfis (ADMIN, OPERADOR)
+- Cadastro e controle de estoque de produtos
+- Registro de vendas com baixa automática de estoque
+- Dashboard com métricas consolidadas (faturamento, estoque, vendas)
+- Autenticação com login/logout e remember-me
+- API REST com autenticação HTTP Basic
+
+---
+
+## Pré-requisitos
 
 - Java 21
-- Gradle 8.12 ou compativel
+- Gradle 8.12+ (ou use o wrapper `./gradlew`)
+- Docker e Docker Compose (para PostgreSQL local)
 
-### Subir a aplicacao
+---
+
+## Configuração
+
+### Perfil H2 (desenvolvimento — banco em memória)
+
+Nenhuma configuração necessária. Os dados iniciais (usuarios e produtos) são criados automaticamente ao subir.
+
+### Perfil PostgreSQL (produção)
+
+1. Copie o arquivo de exemplo e preencha as credenciais reais:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Suba o banco PostgreSQL local:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Carregue as variáveis de ambiente antes de executar:
+   ```bash
+   export $(cat .env | xargs)
+   ```
+
+---
+
+## Executando
+
+### Com banco H2 (padrão para desenvolvimento)
 
 ```bash
-gradle bootRun
+./gradlew bootRun
 ```
 
-A aplicacao sobe por padrao com perfil `h2`.
+Acesse: http://localhost:8080
 
-### Executar testes e cobertura
+### Com PostgreSQL
 
 ```bash
-gradle clean check
+./gradlew bootRun --args='--spring.profiles.active=postgres'
 ```
 
-### Executar Selenium local
+---
+
+## Testes
+
+### Testes unitários e de integração
 
 ```bash
-gradle seleniumTest
+./gradlew clean check
 ```
 
-### Executar validacao pos-deploy contra uma URL existente
+O relatório de cobertura JaCoCo é gerado em `build/reports/jacoco/test/html/index.html`.
+
+### Testes Selenium (pós-deploy)
+
+Requerem a aplicação rodando em `http://localhost:8080` e as variáveis de ambiente `PDV_ADMIN_USER` e `PDV_ADMIN_PASS`:
 
 ```bash
-set PDV_BASE_URL=http://127.0.0.1:8080
-gradle postDeployTest
+PDV_ADMIN_USER=admin@pdv.com PDV_ADMIN_PASS=admin123 ./gradlew seleniumTest
 ```
 
-## Endpoints principais
+---
 
-- `GET /api/usuarios`
-- `GET /api/produtos`
-- `GET /api/integracao/resumo`
-- `GET /api/vendas`
-- `POST /api/vendas`
+## CI/CD
 
-### Exemplo de venda
+### `ci.yml` — Integração Contínua
 
-```json
-{
-  "usuarioId": 1,
-  "formaPagamento": "PIX",
-  "itens": [
-    { "produtoId": 1, "quantidade": 2 },
-    { "produtoId": 2, "quantidade": 1 }
-  ]
-}
+Executado em todo push e pull request para `main`:
+
+1. Build e testes com Gradle
+2. Relatório de cobertura JaCoCo (mínimo 85%)
+3. OWASP Dependency Check (falha em CVEs com CVSS >= 9)
+4. Upload de artefatos de relatório
+
+### `cd.yml` — Entrega Contínua
+
+Executado em push para `main` após CI passar:
+
+1. Empacota o JAR versionado com SHA do commit
+2. Deploy local/remoto via SSH
+3. Smoke tests com autenticação HTTP Basic
+4. Testes Selenium pós-deploy
+5. ZAP DAST (baseline scan)
+
+### Secrets necessários no GitHub
+
+| Secret           | Descrição                                |
+| ---------------- | ---------------------------------------- |
+| `DB_URL`         | URL JDBC do banco PostgreSQL de produção |
+| `DB_USERNAME`    | Usuário do banco                         |
+| `DB_PASSWORD`    | Senha do banco                           |
+| `DEPLOY_HOST`    | Host do servidor de deploy               |
+| `DEPLOY_USER`    | Usuário SSH do servidor                  |
+| `DEPLOY_SSH_KEY` | Chave privada SSH                        |
+| `PDV_ADMIN_USER` | Email do admin para smoke/Selenium tests |
+| `PDV_ADMIN_PASS` | Senha do admin para smoke/Selenium tests |
+
+---
+
+## Credenciais de desenvolvimento
+
+Criadas automaticamente ao subir com o perfil `h2`:
+
+| Email            | Senha    | Perfil   |
+| ---------------- | -------- | -------- |
+| admin@pdv.com    | admin123 | ADMIN    |
+| operador@pdv.com | op123    | OPERADOR |
+| maria@pdv.com    | maria123 | OPERADOR |
+
+> **Atenção:** credenciais para TESTE ! não são para produção.
+
+---
+
+## Estrutura principal
+
 ```
-
-## Workflows GitHub Actions
-
-### CI Principal
-
-Executa build, testes, cobertura e publica artefatos de relatorios e do jar.
-
-### Seguranca
-
-Executa revisao de dependencias em PR e CodeQL na branch principal.
-
-### CD e Validacao Pos-Deploy
-
-Empacota o sistema, realiza deploy remoto via webhook quando configurado ou sobe uma instancia local de homologacao no proprio runner, executa smoke tests, Selenium pos-deploy e DAST com ZAP.
-
-## Segredos opcionais
-
-- `PDV_BASE_URL`: URL do ambiente remoto publicado
-- `PDV_DEPLOY_WEBHOOK`: webhook de deploy remoto do provedor escolhido
-
-Sem esses segredos, o workflow de CD sobe uma instancia local no runner para homologacao automatizada.
+src/main/java/com/pdv/pontovenda/
+├── config/          # SecurityConfig, DataInitializer, filtros, listeners
+├── controller/      # MVC controllers (web) e ApiControllers (REST)
+├── dto/             # Request/Response e form DTOs
+├── entity/          # Entidades JPA
+├── exception/       # Exceções de negócio e handlers
+├── repository/      # Spring Data JPA repositories
+└── service/         # Lógica de negócio
+```

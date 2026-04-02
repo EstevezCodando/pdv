@@ -11,6 +11,8 @@ import com.pdv.pontovenda.entity.Venda;
 import com.pdv.pontovenda.exception.EstoqueInsuficienteException;
 import com.pdv.pontovenda.exception.RegraDeNegocioException;
 import com.pdv.pontovenda.repository.VendaRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.List;
  */
 @Service
 public class VendaService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VendaService.class);
 
     private final VendaRepository vendaRepository;
     private final UsuarioService usuarioService;
@@ -71,7 +75,10 @@ public class VendaService {
         );
         itensVenda.forEach(venda::adicionarItem);
 
-        return mapearResumo(vendaRepository.save(venda));
+        ResumoVendaResponse resumo = mapearResumo(vendaRepository.save(venda));
+        LOGGER.info("venda-concluida id={} operador={} total={} itens={}",
+                resumo.vendaId(), usuario.getNome(), acumulador.valorTotal(), acumulador.quantidadeTotalItens());
+        return resumo;
     }
 
     private ItemVenda criarItemVenda(ItemVendaRequest item, ValidacaoVenda acumulador) {

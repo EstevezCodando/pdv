@@ -12,46 +12,64 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-md-6 col-xl-3">
+            <div class="col-md-6 col-xl-2">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <p class="text-muted mb-1">Usuarios ativos</p>
                         <h2 class="fw-bold mb-0" th:text="${resumo.totalUsuariosAtivos}">0</h2>
-                        <small class="text-muted">Total cadastrados: <span th:text="${resumo.totalUsuarios}">0</span></small>
+                        <small class="text-muted">Total: <span th:text="${resumo.totalUsuarios}">0</span></small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
+            <div class="col-md-6 col-xl-2">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <p class="text-muted mb-1">Produtos ativos</p>
                         <h2 class="fw-bold mb-0" th:text="${resumo.totalProdutosAtivos}">0</h2>
-                        <small class="text-muted">Total cadastrados: <span th:text="${resumo.totalProdutos}">0</span></small>
+                        <small class="text-muted">Total: <span th:text="${resumo.totalProdutos}">0</span></small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
+            <div class="col-md-6 col-xl-2">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <p class="text-muted mb-1">Itens em estoque</p>
                         <h2 class="fw-bold mb-0" th:text="${resumo.totalItensEmEstoque}">0</h2>
-                        <small class="text-muted">Soma de quantidades disponiveis</small>
+                        <small class="text-muted">Estoque baixo: <span th:text="${resumo.totalProdutosComEstoqueBaixo}">0</span></small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-3">
+            <div class="col-md-6 col-xl-2">
                 <div class="card h-100 p-3">
                     <div class="card-body">
-                        <p class="text-muted mb-1">Valor total em estoque</p>
+                        <p class="text-muted mb-1">Valor em estoque</p>
                         <h2 class="fw-bold mb-0" th:text="${#numbers.formatDecimal(resumo.valorTotalEstoque, 1, 'POINT', 2, 'COMMA')}">0,00</h2>
-                        <small class="text-muted">Produtos com estoque baixo: <span th:text="${resumo.totalProdutosComEstoqueBaixo}">0</span></small>
+                        <small class="text-muted">R$</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-2">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Vendas realizadas</p>
+                        <h2 class="fw-bold mb-0" th:text="${resumo.totalVendas}">0</h2>
+                        <small class="text-muted">Ticket medio: R$ <span th:text="${#numbers.formatDecimal(resumo.ticketMedio, 1, 'POINT', 2, 'COMMA')}">0,00</span></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-2">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Faturamento total</p>
+                        <h2 class="fw-bold mb-0" th:text="${#numbers.formatDecimal(resumo.faturamentoTotal, 1, 'POINT', 2, 'COMMA')}">0,00</h2>
+                        <small class="text-muted">R$</small>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row justify-content-center g-4">
-            <div class="col-md-6 col-xl-5">
+            <div class="col-md-6 col-xl-4">
                 <div class="card h-100 text-center p-4">
                     <div class="card-body">
                         <i class="bi bi-people-fill display-3 mb-3" style="color: var(--pdv-highlight);"></i>
@@ -63,7 +81,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-xl-5">
+            <div class="col-md-6 col-xl-4">
                 <div class="card h-100 text-center p-4">
                     <div class="card-body">
                         <i class="bi bi-box-seam-fill display-3 mb-3" style="color: var(--pdv-accent);"></i>
@@ -71,6 +89,18 @@
                         <p class="card-text text-muted">Controle cadastro, estoque e consistencia dos produtos em uma estrutura preparada para evolucao.</p>
                         <a th:href="@{/produtos}" class="btn btn-pdv mt-2">
                             <i class="bi bi-arrow-right me-1"></i>Acessar produtos
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="bi bi-receipt-cutoff display-3 mb-3" style="color: var(--pdv-primary);"></i>
+                        <h5 class="card-title fw-bold">Vendas</h5>
+                        <p class="card-text text-muted">Registre novas vendas e consulte o historico de transacoes com detalhamento por operador.</p>
+                        <a th:href="@{/vendas}" class="btn btn-pdv mt-2">
+                            <i class="bi bi-arrow-right me-1"></i>Acessar vendas
                         </a>
                     </div>
                 </div>

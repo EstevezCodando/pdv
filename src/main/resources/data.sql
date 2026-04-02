@@ -1,9 +1,6 @@
 -- Dados iniciais para desenvolvimento
 
--- Usuarios
-INSERT INTO usuario (nome, email, senha, perfil, ativo) VALUES ('Administrador', 'admin@pdv.com', 'admin123', 'ADMIN', true);
-INSERT INTO usuario (nome, email, senha, perfil, ativo) VALUES ('Operador PDV', 'operador@pdv.com', 'op123', 'OPERADOR', true);
-INSERT INTO usuario (nome, email, senha, perfil, ativo) VALUES ('Maria Silva', 'maria@pdv.com', 'maria123', 'OPERADOR', true);
+-- Usuarios sao criados via DataInitializer (com senha BCrypt) ao subir o perfil h2
 
 -- Produtos
 INSERT INTO produto (nome, descricao, preco, quantidade_estoque, codigo_barras, ativo) VALUES ('Arroz Integral 1kg', 'Arroz integral tipo 1', 8.90, 150, '7891234560001', true);
