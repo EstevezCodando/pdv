@@ -1,66 +1,87 @@
-# PDV - Ponto de Venda
+# PDV Integrado em Java com Gradle
 
-Aplicação web única desenvolvida em Java 21 com Spring Boot, Thymeleaf, JPA e Gradle. O projeto integra os módulos de usuários e produtos em uma única base coesa, com API REST, interface web, cobertura mínima de testes e pipeline de CI no GitHub Actions.
+Sistema de ponto de venda em Java 21 com Spring Boot, Gradle, H2/MySQL, interface web com Thymeleaf, APIs REST, integracao entre modulos de usuarios, produtos e vendas e pipeline completo de CI/CD.
 
-## Decisões estruturais do TP4
+## Principais evolucoes do TP5
 
-O projeto foi consolidado para usar apenas Gradle como ferramenta de build. A dualidade Maven + Gradle foi removida para reduzir ruído operacional, evitar documentação conflitante e simplificar a esteira de CI/CD. Os artefatos gerados pelo build também deixaram de fazer parte do projeto versionado.
+- consolidacao do fluxo de vendas com baixa transacional de estoque
+- resumo integrado ampliado com faturamento, ticket medio e total de vendas
+- logs com correlacao por requisicao para facilitar depuracao local e em workflows
+- pipeline com CI principal, seguranca com CodeQL e revisao de dependencias, CD com validacao pos-deploy, Selenium e DAST
+- upload de artefatos de build, testes e cobertura
 
-## Pré-requisitos
+## Como executar localmente
 
-É necessário ter Java 21 e Gradle instalados na máquina.
+### Requisitos
 
-```bash
-java -version
-gradle -v
-```
+- Java 21
+- Gradle 8.12 ou compativel
 
-## Executar a aplicação
-
-Na raiz do projeto, execute:
+### Subir a aplicacao
 
 ```bash
 gradle bootRun
 ```
 
-A aplicação ficará disponível em `http://localhost:8080`.
+A aplicacao sobe por padrao com perfil `h2`.
 
-## Principais rotas
-
-Na interface web, as rotas principais são `/`, `/usuarios` e `/produtos`. Na API REST, as rotas principais são `/api/usuarios`, `/api/produtos` e `/api/integracao/resumo`.
-
-## Executar testes
-
-Para rodar os testes unitários, de integração e a verificação de cobertura:
+### Executar testes e cobertura
 
 ```bash
 gradle clean check
 ```
 
-Para rodar os testes end-to-end com Selenium:
+### Executar Selenium local
 
 ```bash
 gradle seleniumTest
 ```
 
-## Cobertura
+### Executar validacao pos-deploy contra uma URL existente
 
-O projeto usa JaCoCo com cobertura mínima de 85% em linhas. Após a execução do build, os relatórios ficam em `build/reports/jacoco/test/html` e `build/reports/tests/test`.
-
-## GitHub Actions
-
-O workflow principal executa build, testes e cobertura em `push`, `pull_request` e `workflow_dispatch`. O workflow de Selenium é executado manualmente para reduzir falsos negativos em validações rotineiras de PR.
-
-## Estrutura principal
-
-```text
-src/main/java/com/pdv/pontovenda
-├── config
-├── controller
-├── dto
-├── entity
-├── exception
-├── repository
-├── service
-└── validation
+```bash
+set PDV_BASE_URL=http://127.0.0.1:8080
+gradle postDeployTest
 ```
+
+## Endpoints principais
+
+- `GET /api/usuarios`
+- `GET /api/produtos`
+- `GET /api/integracao/resumo`
+- `GET /api/vendas`
+- `POST /api/vendas`
+
+### Exemplo de venda
+
+```json
+{
+  "usuarioId": 1,
+  "formaPagamento": "PIX",
+  "itens": [
+    { "produtoId": 1, "quantidade": 2 },
+    { "produtoId": 2, "quantidade": 1 }
+  ]
+}
+```
+
+## Workflows GitHub Actions
+
+### CI Principal
+
+Executa build, testes, cobertura e publica artefatos de relatorios e do jar.
+
+### Seguranca
+
+Executa revisao de dependencias em PR e CodeQL na branch principal.
+
+### CD e Validacao Pos-Deploy
+
+Empacota o sistema, realiza deploy remoto via webhook quando configurado ou sobe uma instancia local de homologacao no proprio runner, executa smoke tests, Selenium pos-deploy e DAST com ZAP.
+
+## Segredos opcionais
+
+- `PDV_BASE_URL`: URL do ambiente remoto publicado
+- `PDV_DEPLOY_WEBHOOK`: webhook de deploy remoto do provedor escolhido
+
+Sem esses segredos, o workflow de CD sobe uma instancia local no runner para homologacao automatizada.

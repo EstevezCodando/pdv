@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 /**
- * Orquestra a integracao entre os modulos de usuario e produto, oferecendo uma visao consolidada.
+ * Orquestra a integracao entre os modulos de usuario, produto e vendas, oferecendo uma visao consolidada.
  */
 @Service
 public class ResumoIntegradoService {
@@ -18,15 +19,21 @@ public class ResumoIntegradoService {
 
     private final UsuarioService usuarioService;
     private final ProdutoService produtoService;
+    private final VendaService vendaService;
 
-    public ResumoIntegradoService(UsuarioService usuarioService, ProdutoService produtoService) {
+    public ResumoIntegradoService(UsuarioService usuarioService,
+                                  ProdutoService produtoService,
+                                  VendaService vendaService) {
         this.usuarioService = usuarioService;
         this.produtoService = produtoService;
+        this.vendaService = vendaService;
     }
 
     @Transactional(readOnly = true)
     public ResumoIntegradoResponse gerarResumo() {
         List<Produto> produtos = produtoService.listarTodos();
+        long totalVendas = vendaService.contarTodas();
+        BigDecimal faturamentoTotal = vendaService.calcularFaturamentoTotal();
 
         long totalItensEmEstoque = produtos.stream()
                 .map(Produto::getQuantidadeEstoque)
@@ -44,6 +51,10 @@ public class ResumoIntegradoService {
                 .filter(produto -> produto.getQuantidadeEstoque() <= LIMIAR_ESTOQUE_BAIXO)
                 .count();
 
+        BigDecimal ticketMedio = totalVendas == 0
+                ? BigDecimal.ZERO
+                : faturamentoTotal.divide(BigDecimal.valueOf(totalVendas), 2, RoundingMode.HALF_UP);
+
         return new ResumoIntegradoResponse(
                 usuarioService.contarTodos(),
                 usuarioService.contarAtivos(),
@@ -51,7 +62,10 @@ public class ResumoIntegradoService {
                 produtoService.contarAtivos(),
                 totalItensEmEstoque,
                 valorTotalEstoque,
-                totalProdutosComEstoqueBaixo
+                totalProdutosComEstoqueBaixo,
+                totalVendas,
+                faturamentoTotal,
+                ticketMedio
         );
     }
 }

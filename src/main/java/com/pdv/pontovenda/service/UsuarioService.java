@@ -44,6 +44,15 @@ public class UsuarioService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario", id));
     }
 
+    @Transactional(readOnly = true)
+    public Usuario buscarAtivoPorId(Long id) {
+        Usuario usuario = buscarPorId(id);
+        if (Boolean.FALSE.equals(usuario.getAtivo())) {
+            throw new RegraDeNegocioException("O usuario informado esta inativo e nao pode operar no caixa.");
+        }
+        return usuario;
+    }
+
     @Transactional
     public Usuario salvar(Usuario usuario) {
         validarEmailUnico(usuario.getEmail());

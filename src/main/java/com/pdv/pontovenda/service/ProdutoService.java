@@ -44,6 +44,15 @@ public class ProdutoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto", id));
     }
 
+    @Transactional(readOnly = true)
+    public Produto buscarAtivoPorId(Long id) {
+        Produto produto = buscarPorId(id);
+        if (Boolean.FALSE.equals(produto.getAtivo())) {
+            throw new RegraDeNegocioException("O produto informado esta inativo e nao pode participar de uma venda.");
+        }
+        return produto;
+    }
+
     @Transactional
     public Produto salvar(Produto produto) {
         validarCodigoBarrasUnico(produto);
@@ -76,6 +85,13 @@ public class ProdutoService {
     public void excluir(Long id) {
         Produto produto = buscarPorId(id);
         produtoRepository.delete(produto);
+    }
+
+    @Transactional
+    public void baixarEstoque(Produto produto, int quantidade) {
+        int quantidadeAtual = produto.getQuantidadeEstoque() == null ? 0 : produto.getQuantidadeEstoque();
+        produto.setQuantidadeEstoque(quantidadeAtual - quantidade);
+        produtoRepository.save(produto);
     }
 
     private void aplicarAlteracoes(Produto origem, Produto destino) {

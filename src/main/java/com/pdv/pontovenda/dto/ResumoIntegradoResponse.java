@@ -12,6 +12,9 @@ public record ResumoIntegradoResponse(
         long totalProdutosAtivos,
         long totalItensEmEstoque,
         BigDecimal valorTotalEstoque,
-        long totalProdutosComEstoqueBaixo
+        long totalProdutosComEstoqueBaixo,
+        long totalVendas,
+        BigDecimal faturamentoTotal,
+        BigDecimal ticketMedio
 ) {
 }
