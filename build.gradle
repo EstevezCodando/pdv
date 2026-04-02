@@ -134,3 +134,52 @@ jacocoTestCoverageVerification {
 tasks.named('check') {
     dependsOn tasks.named('jacocoTestCoverageVerification')
 }
+
+
+test {
+    // === CAPTURA DETALHADA DE FALHAS ===
+    def arquivoFalhas = file("$buildDir/reports/tests/falhas_detalhadas.txt")
+    def arquivoResumo = file("$buildDir/reports/tests/resumo.txt")
+
+    doFirst {
+        arquivoFalhas.parentFile.mkdirs()
+        arquivoFalhas.text = ""
+        arquivoResumo.text = ""
+    }
+
+    afterTest { descriptor, result ->
+        if (result.resultType == org.gradle.api.tasks.testing.TestResult.ResultType.FAILURE) {
+            arquivoFalhas << "\n============================================================\n"
+            arquivoFalhas << "TESTE FALHOU\n"
+            arquivoFalhas << "Classe   : ${descriptor.className}\n"
+            arquivoFalhas << "Método   : ${descriptor.name}\n"
+            arquivoFalhas << "Status   : ${result.resultType}\n"
+            arquivoFalhas << "============================================================\n"
+
+            if (result.exceptions != null && !result.exceptions.isEmpty()) {
+                result.exceptions.eachWithIndex { exception, indice ->
+                    arquivoFalhas << "\n[EXCEÇÃO ${indice + 1}]\n"
+                    arquivoFalhas << "Tipo     : ${exception.getClass().getName()}\n"
+                    arquivoFalhas << "Mensagem : ${exception.getMessage() ?: 'Sem mensagem'}\n\n"
+                    arquivoFalhas << "STACK TRACE:\n"
+                    exception.printStackTrace(new PrintWriter(new FileWriter(arquivoFalhas, true)))
+                    arquivoFalhas << "\n"
+                }
+            } else {
+                arquivoFalhas << "\nNenhuma exceção detalhada foi disponibilizada pelo Gradle.\n"
+            }
+        }
+    }
+
+    afterSuite { descriptor, result ->
+        if (!descriptor.parent) {
+            arquivoResumo.text = "\n================ RESUMO DOS TESTES ================\n" +
+                    "Total     : ${result.testCount}\n" +
+                    "Sucesso   : ${result.successfulTestCount}\n" +
+                    "Falhas    : ${result.failedTestCount}\n" +
+                    "Ignorados : ${result.skippedTestCount}\n\n" +
+                    "==================================================\n"
+        }
+    }
+
+}
