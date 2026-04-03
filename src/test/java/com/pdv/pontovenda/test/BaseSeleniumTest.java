@@ -2,13 +2,11 @@ package com.pdv.pontovenda.test;
 
 import com.pdv.pontovenda.repository.ProdutoRepository;
 import com.pdv.pontovenda.repository.UsuarioRepository;
-import io.github.bonigarcia.wdm.WebDriverManager;
+import com.pdv.pontovenda.test.support.SeleniumDriverFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -36,19 +34,12 @@ public abstract class BaseSeleniumTest {
 
     @BeforeAll
     static void configurarDriverGlobal() {
-        WebDriverManager.chromedriver().setup();
+        SeleniumDriverFactory.prepararDriver();
     }
 
     @BeforeEach
     void inicializarDriver() {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--window-size=1920,1080");
-
-        driver = new ChromeDriver(options);
+        driver = SeleniumDriverFactory.criarDriverHeadless();
 
         // Limpa o banco antes de cada teste
         produtoRepository.deleteAll();

@@ -43,5 +43,47 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  pdv-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-build
+    profiles: ["build"]
+    environment:
+      GRADLE_TASK: clean bootJar
+
+  pdv-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-test
+    profiles: ["test"]
+    environment:
+      GRADLE_TASK: clean test
+
+  pdv-selenium:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-selenium
+    profiles: ["selenium"]
+    environment:
+      GRADLE_TASK: seleniumTest
+
+  pdv-postdeploy-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-postdeploy-test
+    profiles: ["postdeploy"]
+    depends_on:
+      pdv-app:
+        condition: service_healthy
+    environment:
+      GRADLE_TASK: postDeployTest
+      PDV_BASE_URL: http://pdv-app:8080
+      PDV_ADMIN_USER: admin@pdv.com
+      PDV_ADMIN_PASS: admin123
+
 volumes:
   postgres_data:

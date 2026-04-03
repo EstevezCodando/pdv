@@ -1,14 +1,12 @@
 package com.pdv.pontovenda.test;
 
 import com.pdv.pontovenda.page.LoginPage;
-import io.github.bonigarcia.wdm.WebDriverManager;
+import com.pdv.pontovenda.test.support.SeleniumDriverFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.time.Duration;
 
@@ -24,10 +22,8 @@ class PosDeploySeleniumTest {
     void configurar() {
         baseUrl = System.getenv().getOrDefault("PDV_BASE_URL", "http://127.0.0.1:8080");
 
-        WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage");
-        driver = new ChromeDriver(options);
+        SeleniumDriverFactory.prepararDriver();
+        driver = SeleniumDriverFactory.criarDriverHeadless();
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
         String adminUser = System.getenv().getOrDefault("PDV_ADMIN_USER", "admin@pdv.com");

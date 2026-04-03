@@ -1,0 +1,20 @@
+FROM gradle:8.12.1-jdk21
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends chromium chromium-driver ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/gradle/project
+
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+ENV GRADLE_USER_HOME=/home/gradle/.gradle
+
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
+COPY --chown=gradle:gradle src ./src
+COPY --chown=gradle:gradle docker/scripts ./docker/scripts
+
+USER gradle
+
+ENTRYPOINT ["bash", "./docker/scripts/executar-gradle.sh"]

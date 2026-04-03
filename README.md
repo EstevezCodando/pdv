@@ -154,3 +154,34 @@ src/main/java/com/pdv/pontovenda/
 ├── repository/      # Spring Data JPA repositories
 └── service/         # Lógica de negócio
 ```
+
+## Execucao padronizada via Docker
+
+Para garantir build e validacao da suite no mesmo ambiente, use a sequencia abaixo.
+
+### 1. Build do projeto com Gradle em container
+
+```bash
+docker compose --profile build run --rm pdv-build
+```
+
+### 2. Testes unitarios e de integracao
+
+```bash
+docker compose --profile test run --rm pdv-test
+```
+
+### 3. Testes end-to-end com Selenium
+
+```bash
+docker compose --profile selenium run --rm pdv-selenium
+```
+
+### 4. Aplicacao publicada para validacao pos-deploy
+
+```bash
+docker compose up -d postgres pdv-app
+docker compose --profile postdeploy run --rm pdv-postdeploy-test
+```
+
+Os containers de teste publicam logs customizados no inicio e no fim da execucao e exibem automaticamente os arquivos `build/reports/tests/resumo.txt` e `build/reports/tests/falhas_detalhadas.txt` quando existirem.
