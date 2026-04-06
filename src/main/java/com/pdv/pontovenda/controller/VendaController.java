@@ -21,10 +21,6 @@ import java.util.List;
 
 /**
  * Controller MVC para o fluxo de vendas via interface web.
- * Rotas:
- *   GET  /vendas      -> Historico de vendas
- *   GET  /vendas/nova -> Formulario de nova venda
- *   POST /vendas/nova -> Registrar venda
  */
 @Controller
 @RequestMapping("/vendas")
@@ -55,8 +51,7 @@ public class VendaController {
     @GetMapping("/nova")
     public String novaVenda(Model model) {
         NovaVendaForm form = new NovaVendaForm();
-        produtoService.listarTodos().stream()
-                .filter(p -> Boolean.TRUE.equals(p.getAtivo()))
+        produtoService.listarAtivos().stream()
                 .map(p -> new ItemVendaForm(p.getId(), p.getNome(), p.getPreco()))
                 .forEach(form.getItens()::add);
 
@@ -99,9 +94,7 @@ public class VendaController {
 
     private void prepararFormulario(Model model, NovaVendaForm form) {
         model.addAttribute("novaVendaForm", form);
-        model.addAttribute("usuarios", usuarioService.listarTodos().stream()
-                .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
-                .toList());
+        model.addAttribute("usuarios", usuarioService.listarAtivos());
         model.addAttribute("formasPagamento", FormaPagamento.values());
     }
 }

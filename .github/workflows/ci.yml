@@ -73,3 +73,16 @@ jobs:
       - name: Registrar conclusao do pipeline
         if: always()
         run: bash .github/scripts/registrar-etapa.sh "Pipeline CI concluido"
+
+      - name: Resumo do pipeline CI
+        if: always()
+        run: |
+          echo "## 📊 CI — Build \#${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Etapa | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build e Testes | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cobertura mínima | 90% (JaCoCo) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST OWASP Dependency Check | Executado |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\` — **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

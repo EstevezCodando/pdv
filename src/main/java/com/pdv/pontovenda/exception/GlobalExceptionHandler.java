@@ -16,7 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -51,16 +51,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
         logger.warn("Erro de validacao: {}", ex.getMessage());
 
-        Map<String, String> errosCampos = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(erro ->
-                errosCampos.put(erro.getField(), erro.getDefaultMessage()));
+        Map<String, String> campos = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(e -> campos.put(e.getField(), e.getDefaultMessage()));
 
-        Map<String, Object> resposta = new HashMap<>();
-        resposta.put("status", HttpStatus.BAD_REQUEST.value());
-        resposta.put("erro", "Dados invalidos");
-        resposta.put("campos", errosCampos);
-
-        return ResponseEntity.badRequest().body(resposta);
+        return ResponseEntity.badRequest().body(Map.of(
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "erro", "Dados invalidos",
+                "campos", campos
+        ));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -136,9 +134,6 @@ public class GlobalExceptionHandler {
     }
 
     private Map<String, Object> criarErroApi(int status, String mensagem) {
-        Map<String, Object> erro = new HashMap<>();
-        erro.put("status", status);
-        erro.put("erro", mensagem);
-        return erro;
+        return Map.of("status", status, "erro", mensagem);
     }
 }

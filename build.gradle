@@ -50,6 +50,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// =============================================================
+// Testes unitarios e de integracao (exclui Selenium)
+// =============================================================
 tasks.named('test') {
     useJUnitPlatform()
     exclude '**/*SeleniumTest.class'
@@ -63,13 +66,63 @@ tasks.named('test') {
         showCauses = true
         showStackTraces = true
     }
+
+    // === CAPTURA DETALHADA DE FALHAS ===
+    def arquivoFalhas = layout.buildDirectory.file("reports/tests/falhas_detalhadas.txt").get().asFile
+    def arquivoResumo = layout.buildDirectory.file("reports/tests/resumo.txt").get().asFile
+
+    doFirst {
+        arquivoFalhas.parentFile.mkdirs()
+        arquivoFalhas.text = ""
+        arquivoResumo.text = ""
+    }
+
+    afterTest { descriptor, result ->
+        if (result.resultType == org.gradle.api.tasks.testing.TestResult.ResultType.FAILURE) {
+            arquivoFalhas << "\n============================================================\n"
+            arquivoFalhas << "TESTE FALHOU\n"
+            arquivoFalhas << "Classe   : ${descriptor.className}\n"
+            arquivoFalhas << "Metodo   : ${descriptor.name}\n"
+            arquivoFalhas << "Status   : ${result.resultType}\n"
+            arquivoFalhas << "============================================================\n"
+
+            // result.exception (singular) é a API estável do Gradle 8 e 9
+            def exc = result.exception
+            if (exc != null) {
+                arquivoFalhas << "\n[EXCECAO]\n"
+                arquivoFalhas << "Tipo     : ${exc.getClass().getName()}\n"
+                arquivoFalhas << "Mensagem : ${exc.getMessage() ?: 'Sem mensagem'}\n\n"
+                arquivoFalhas << "STACK TRACE:\n"
+                exc.printStackTrace(new PrintWriter(new FileWriter(arquivoFalhas, true)))
+                arquivoFalhas << "\n"
+            } else {
+                arquivoFalhas << "\nNenhuma excecao detalhada foi disponibilizada pelo Gradle.\n"
+            }
+        }
+    }
+
+    afterSuite { descriptor, result ->
+        if (!descriptor.parent) {
+            arquivoResumo.text = "\n================ RESUMO DOS TESTES ================\n" +
+                    "Total     : ${result.testCount}\n" +
+                    "Sucesso   : ${result.successfulTestCount}\n" +
+                    "Falhas    : ${result.failedTestCount}\n" +
+                    "Ignorados : ${result.skippedTestCount}\n\n" +
+                    "==================================================\n"
+        }
+    }
 }
 
+// =============================================================
+// Testes end-to-end com Selenium (requer aplicacao no ar)
+// =============================================================
 tasks.register('seleniumTest', Test) {
     description = 'Executa apenas os testes end-to-end com Selenium.'
     group = 'verification'
     useJUnitPlatform()
     include '**/*SeleniumTest.class'
+    // PosDeploySeleniumTest termina em SeleniumTest mas exige app externa; exclui aqui
+    exclude '**/*PosDeploySeleniumTest.class'
     shouldRunAfter tasks.named('test')
 
     testLogging {
@@ -81,6 +134,9 @@ tasks.register('seleniumTest', Test) {
     }
 }
 
+// =============================================================
+// Testes pos-deploy (aponta para aplicacao publicada)
+// =============================================================
 tasks.register('postDeployTest', Test) {
     description = 'Executa testes pos-deploy apontando para uma aplicacao ja publicada.'
     group = 'verification'
@@ -97,17 +153,35 @@ tasks.register('postDeployTest', Test) {
     }
 }
 
+// =============================================================
+// SAST — OWASP Dependency Check
+// =============================================================
 dependencyCheck {
-    // So falha o build em vulnerabilidades criticas (CVSS >= 9)
+    // Falha o build apenas em vulnerabilidades criticas (CVSS >= 9)
     failBuildOnCVSS = 9
     suppressionFile = 'dependency-check-suppressions.xml'
     formats = ['HTML']
     outputDirectory = 'build/reports'
 }
 
+// =============================================================
+// Cobertura de testes — JaCoCo
+// =============================================================
 jacoco {
     toolVersion = '0.8.12'
 }
+
+// Classes excluidas da cobertura:
+//   SecurityConfig   — substituida por TestSecurityConfig no perfil de teste (Spring Security config)
+//   DataInitializer  — ativa apenas no perfil h2 (seed de dados para dev, nao logica de negocio)
+//   PontoDeVendaApplication — boilerplate do Spring Boot entry-point
+//   PerfisUsuario    — classe de constantes, sem logica testavel
+def jacocoExclusoes = [
+    '**/SecurityConfig*',
+    '**/DataInitializer*',
+    '**/PontoDeVendaApplication*',
+    '**/PerfisUsuario*'
+]
 
 jacocoTestReport {
     dependsOn tasks.named('test')
@@ -116,16 +190,26 @@ jacocoTestReport {
         html.required = true
         csv.required = false
     }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, excludes: jacocoExclusoes)
+        }))
+    }
 }
 
 jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, excludes: jacocoExclusoes)
+        }))
+    }
     violationRules {
         rule {
             element = 'BUNDLE'
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.85
+                minimum = 0.90
             }
         }
     }
@@ -133,53 +217,4 @@ jacocoTestCoverageVerification {
 
 tasks.named('check') {
     dependsOn tasks.named('jacocoTestCoverageVerification')
-}
-
-
-test {
-    // === CAPTURA DETALHADA DE FALHAS ===
-    def arquivoFalhas = file("$buildDir/reports/tests/falhas_detalhadas.txt")
-    def arquivoResumo = file("$buildDir/reports/tests/resumo.txt")
-
-    doFirst {
-        arquivoFalhas.parentFile.mkdirs()
-        arquivoFalhas.text = ""
-        arquivoResumo.text = ""
-    }
-
-    afterTest { descriptor, result ->
-        if (result.resultType == org.gradle.api.tasks.testing.TestResult.ResultType.FAILURE) {
-            arquivoFalhas << "\n============================================================\n"
-            arquivoFalhas << "TESTE FALHOU\n"
-            arquivoFalhas << "Classe   : ${descriptor.className}\n"
-            arquivoFalhas << "Método   : ${descriptor.name}\n"
-            arquivoFalhas << "Status   : ${result.resultType}\n"
-            arquivoFalhas << "============================================================\n"
-
-            if (result.exceptions != null && !result.exceptions.isEmpty()) {
-                result.exceptions.eachWithIndex { exception, indice ->
-                    arquivoFalhas << "\n[EXCEÇÃO ${indice + 1}]\n"
-                    arquivoFalhas << "Tipo     : ${exception.getClass().getName()}\n"
-                    arquivoFalhas << "Mensagem : ${exception.getMessage() ?: 'Sem mensagem'}\n\n"
-                    arquivoFalhas << "STACK TRACE:\n"
-                    exception.printStackTrace(new PrintWriter(new FileWriter(arquivoFalhas, true)))
-                    arquivoFalhas << "\n"
-                }
-            } else {
-                arquivoFalhas << "\nNenhuma exceção detalhada foi disponibilizada pelo Gradle.\n"
-            }
-        }
-    }
-
-    afterSuite { descriptor, result ->
-        if (!descriptor.parent) {
-            arquivoResumo.text = "\n================ RESUMO DOS TESTES ================\n" +
-                    "Total     : ${result.testCount}\n" +
-                    "Sucesso   : ${result.successfulTestCount}\n" +
-                    "Falhas    : ${result.failedTestCount}\n" +
-                    "Ignorados : ${result.skippedTestCount}\n\n" +
-                    "==================================================\n"
-        }
-    }
-
 }

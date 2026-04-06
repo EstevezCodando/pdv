@@ -33,6 +33,11 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
+    public List<Usuario> listarAtivos() {
+        return usuarioRepository.findByAtivoTrue();
+    }
+
+    @Transactional(readOnly = true)
     public long contarTodos() {
         return usuarioRepository.count();
     }

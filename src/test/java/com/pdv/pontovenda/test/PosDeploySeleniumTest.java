@@ -1,6 +1,10 @@
 package com.pdv.pontovenda.test;
 
 import com.pdv.pontovenda.page.LoginPage;
+<<<<<<< HEAD
+=======
+import com.pdv.pontovenda.page.VendaPage;
+>>>>>>> f3619a6 (tp5)
 import com.pdv.pontovenda.test.support.SeleniumDriverFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,5 +55,17 @@ class PosDeploySeleniumTest {
 
         driver.get(baseUrl + "/produtos");
         assertTrue(driver.getPageSource().contains("Produtos") || driver.getPageSource().contains("prod"));
+    }
+
+    @Test
+    @DisplayName("Deve acessar historico de vendas e formulario de nova venda")
+    void deveAcessarPaginaDeVendas() {
+        VendaPage vendaPage = new VendaPage(driver);
+
+        driver.get(baseUrl + "/vendas");
+        assertTrue(vendaPage.historicoCarregou(), "Pagina de historico de vendas nao carregou");
+
+        driver.get(baseUrl + "/vendas/nova");
+        assertTrue(vendaPage.formularioCarregou(), "Formulario de nova venda nao carregou");
     }
 }

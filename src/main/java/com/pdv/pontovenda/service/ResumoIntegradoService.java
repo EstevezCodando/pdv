@@ -47,8 +47,7 @@ public class ResumoIntegradoService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         long totalProdutosComEstoqueBaixo = produtos.stream()
-                .filter(produto -> produto.getQuantidadeEstoque() != null)
-                .filter(produto -> produto.getQuantidadeEstoque() <= LIMIAR_ESTOQUE_BAIXO)
+                .filter(p -> p.getQuantidadeEstoque() != null && p.getQuantidadeEstoque() <= LIMIAR_ESTOQUE_BAIXO)
                 .count();
 
         BigDecimal ticketMedio = totalVendas == 0

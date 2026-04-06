@@ -15,13 +15,6 @@ import java.util.List;
 
 /**
  * Controller MVC para gerenciamento de produtos via interface web.
- * Rotas:
- *   GET  /produtos          -> Listagem
- *   GET  /produtos/novo     -> Formulario de cadastro
- *   POST /produtos/salvar   -> Persistir novo produto
- *   GET  /produtos/editar/{id} -> Formulario de edicao
- *   POST /produtos/atualizar/{id} -> Persistir alteracao
- *   GET  /produtos/excluir/{id}   -> Excluir produto
  */
 @Controller
 @RequestMapping("/produtos")
@@ -120,6 +113,7 @@ public class ProdutoController {
         }
         return REDIRECT_LISTAGEM;
     }
+
     private void prepararFormulario(Model model, Produto produto, String acao) {
         model.addAttribute("produto", produto);
         model.addAttribute("acao", acao);

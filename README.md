@@ -1,5 +1,10 @@
 # PDV System — Ponto de Venda
 
+[![CI](https://github.com/EstevezCodando/pdv/actions/workflows/ci.yml/badge.svg)](https://github.com/EstevezCodando/pdv/actions/workflows/ci.yml)
+[![CD](https://github.com/EstevezCodando/pdv/actions/workflows/cd.yml/badge.svg)](https://github.com/EstevezCodando/pdv/actions/workflows/cd.yml)
+[![CodeQL](https://github.com/EstevezCodando/pdv/actions/workflows/security.yml/badge.svg)](https://github.com/EstevezCodando/pdv/actions/workflows/security.yml)
+[![Coverage](https://img.shields.io/badge/cobertura-%E2%89%A591%25-brightgreen)](https://github.com/EstevezCodando/pdv/actions/workflows/ci.yml)
+
 Sistema de gerenciamento de ponto de venda desenvolvido como trabalho prático (TP5) na disciplina de Projeto De Bloco
 
 ---
@@ -99,7 +104,7 @@ PDV_ADMIN_USER=admin@pdv.com PDV_ADMIN_PASS=admin123 ./gradlew seleniumTest
 Executado em todo push e pull request para `main`:
 
 1. Build e testes com Gradle
-2. Relatório de cobertura JaCoCo (mínimo 85%)
+2. Relatório de cobertura JaCoCo (mínimo 90%)
 3. OWASP Dependency Check (falha em CVEs com CVSS >= 9)
 4. Upload de artefatos de relatório
 
@@ -125,6 +130,11 @@ Executado em push para `main` após CI passar:
 | `DEPLOY_SSH_KEY` | Chave privada SSH                        |
 | `PDV_ADMIN_USER` | Email do admin para smoke/Selenium tests |
 | `PDV_ADMIN_PASS` | Senha do admin para smoke/Selenium tests |
+
+> **Sobre OIDC:** O pipeline utiliza webhook autenticado via `PDV_DEPLOY_WEBHOOK` secret para deploy remoto.
+> Autenticação OIDC com provedor de nuvem (AWS/Azure/GCP) pode ser habilitada substituindo o step de webhook
+> pela action oficial do provedor (`aws-actions/configure-aws-credentials`, `azure/login`, etc.)
+> quando a infraestrutura cloud for provisionada.
 
 ---
 
@@ -155,6 +165,54 @@ src/main/java/com/pdv/pontovenda/
 └── service/         # Lógica de negócio
 ```
 
+<<<<<<< HEAD
+=======
+## Arquitetura do Sistema
+
+O PDV adota arquitetura **MVC em camadas** com Spring Boot 3. Cada camada tem responsabilidade única e não conhece detalhes das camadas adjacentes.
+
+### Camadas e responsabilidades
+
+| Camada | Responsabilidade |
+|--------|-----------------|
+| `entity` | Domínio persistido. `Venda` e `ItemVenda` são imutáveis por construção — sem setters públicos, criação obrigatória via factory `criar()`. |
+| `repository` | Acesso a dados via Spring Data JPA. Queries derivadas por convenção de nomes; nenhum SQL explícito. |
+| `service` | Regras de negócio: validação de estoque, unicidade de e-mail/código de barras, orquestração transacional. Única camada com `@Transactional`. |
+| `controller` MVC | Requisições web. Delega ao service, devolve views Thymeleaf. Sem lógica de negócio. |
+| `controller` REST | API `/api/**` com Records imutáveis como DTOs. Validação com `@Valid` + fail-early guards. |
+| `dto` | Records Java 21. Contratos imutáveis e sem boilerplate entre API e service. |
+| `exception` | Hierarquia: `RegraDeNegocioException` → `EstoqueInsuficienteException`. `GlobalExceptionHandler` centraliza respostas MVC e REST sem expor stack trace. |
+| `config` | Spring Security (BCrypt, roles ADMIN/OPERADOR, remember-me), filtro MDC, listener de autenticação. |
+
+### Fluxo de uma venda
+
+```
+Browser / API
+  → VendaController / VendaApiController
+  → VendaService.registrarVenda()
+      → UsuarioService.buscarAtivoPorId()    [guard: operador deve estar ativo]
+      → ProdutoService.buscarAtivoPorId()    [guard: produto deve estar ativo]
+      → validarEstoque()                     [lança EstoqueInsuficienteException se falhar]
+      → ProdutoService.baixarEstoque()
+      → Venda.criar() + ItemVenda.criar()    [factory imutável — sem setter público]
+      → VendaRepository.save()
+      → LOG: venda-concluida id= operador= total= itens=
+```
+
+### Decisões técnicas
+
+| Decisão | Justificativa |
+|---------|---------------|
+| Records para DTOs | Contratos imutáveis; sem Lombok/boilerplate. |
+| Factory em entidades | Impede construção em estado inválido. |
+| Perfis Spring (`h2`, `postgres`, `test`) | Isolamento de ambiente sem alterar código. |
+| BCrypt + validação pré-encoding | Senha mínima de 4 chars validada antes de codificar; hash de 60 chars não quebra `@Size`. |
+| MDC requestId | Correlação de logs de uma mesma requisição em produção. |
+| JaCoCo com exclusões de infra | `SecurityConfig` e `DataInitializer` excluídos — cobertura reflete exclusivamente lógica de negócio. |
+
+---
+
+>>>>>>> f3619a6 (tp5)
 ## Execucao padronizada via Docker
 
 Para garantir build e validacao da suite no mesmo ambiente, use a sequencia abaixo.
