@@ -1,10 +1,7 @@
 package com.pdv.pontovenda.test;
 
 import com.pdv.pontovenda.page.LoginPage;
-<<<<<<< HEAD
-=======
 import com.pdv.pontovenda.page.VendaPage;
->>>>>>> f3619a6 (tp5)
 import com.pdv.pontovenda.test.support.SeleniumDriverFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

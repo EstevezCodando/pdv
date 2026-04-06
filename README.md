@@ -165,8 +165,6 @@ src/main/java/com/pdv/pontovenda/
 └── service/         # Lógica de negócio
 ```
 
-<<<<<<< HEAD
-=======
 ## Arquitetura do Sistema
 
 O PDV adota arquitetura **MVC em camadas** com Spring Boot 3. Cada camada tem responsabilidade única e não conhece detalhes das camadas adjacentes.
@@ -212,7 +210,6 @@ Browser / API
 
 ---
 
->>>>>>> f3619a6 (tp5)
 ## Execucao padronizada via Docker
 
 Para garantir build e validacao da suite no mesmo ambiente, use a sequencia abaixo.

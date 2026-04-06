@@ -1,16 +1,6 @@
 FROM gradle:8.12.1-jdk21
 
 USER root
-<<<<<<< HEAD
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends chromium chromium-driver ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /home/gradle/project
-
-ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
-=======
 # No Ubuntu 24.04 (base desta imagem), o pacote "chromium" é um shim do Snap que
 # não funciona dentro de Docker. Instala o Google Chrome Stable a partir do
 # repositório oficial do Google, que distribui um .deb nativo.
@@ -33,7 +23,6 @@ RUN chown gradle:gradle /home/gradle/project
 ENV CHROME_BIN=/usr/bin/google-chrome-stable
 # CHROMEDRIVER_PATH não definido: SeleniumDriverFactory usa WebDriverManager
 # para baixar a versão do ChromeDriver compatível com o Chrome instalado.
->>>>>>> f3619a6 (tp5)
 ENV GRADLE_USER_HOME=/home/gradle/.gradle
 
 COPY --chown=gradle:gradle build.gradle settings.gradle ./
