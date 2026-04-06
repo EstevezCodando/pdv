@@ -34,8 +34,8 @@ public class Usuario {
     private String email;
 
     @NotBlank(message = "A senha e obrigatoria")
-    @Size(min = 4, max = 100, message = "A senha deve ter entre 4 e 100 caracteres")
-    @Column(nullable = false, length = 100)
+    @Size(min = 4, message = "A senha deve ter no minimo 4 caracteres")
+    @Column(nullable = false, length = 255)
     private String senha;
 
     @NotBlank(message = "O perfil e obrigatorio")

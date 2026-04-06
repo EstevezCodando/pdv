@@ -7,7 +7,9 @@ import java.util.List;
  */
 public final class PerfisUsuario {
 
-    public static final List<String> DISPONIVEIS = List.of("ADMIN", "OPERADOR");
+    public static final String ADMIN = "ADMIN";
+    public static final String OPERADOR = "OPERADOR";
+    public static final List<String> DISPONIVEIS = List.of(ADMIN, OPERADOR);
 
     private PerfisUsuario() {
         throw new IllegalStateException("Classe utilitaria nao deve ser instanciada");

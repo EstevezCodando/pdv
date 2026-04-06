@@ -5,8 +5,10 @@ import com.pdv.pontovenda.exception.RecursoNaoEncontradoException;
 import com.pdv.pontovenda.exception.RegraDeNegocioException;
 import com.pdv.pontovenda.repository.UsuarioRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -18,14 +20,21 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Usuario> listarAtivos() {
+        return usuarioRepository.findByAtivoTrue();
     }
 
     @Transactional(readOnly = true)
@@ -44,9 +53,19 @@ public class UsuarioService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario", id));
     }
 
+    @Transactional(readOnly = true)
+    public Usuario buscarAtivoPorId(Long id) {
+        Usuario usuario = buscarPorId(id);
+        if (Boolean.FALSE.equals(usuario.getAtivo())) {
+            throw new RegraDeNegocioException("O usuario informado esta inativo e nao pode operar no caixa.");
+        }
+        return usuario;
+    }
+
     @Transactional
     public Usuario salvar(Usuario usuario) {
         validarEmailUnico(usuario.getEmail());
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         try {
             Usuario usuarioSalvo = usuarioRepository.save(usuario);
             usuarioRepository.flush();
@@ -81,7 +100,9 @@ public class UsuarioService {
     private void aplicarAlteracoes(Usuario origem, Usuario destino) {
         destino.setNome(origem.getNome());
         destino.setEmail(origem.getEmail());
-        destino.setSenha(origem.getSenha());
+        if (StringUtils.hasText(origem.getSenha())) {
+            destino.setSenha(passwordEncoder.encode(origem.getSenha()));
+        }
         destino.setPerfil(origem.getPerfil());
         destino.setAtivo(origem.getAtivo());
     }

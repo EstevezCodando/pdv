@@ -7,8 +7,10 @@ import com.pdv.pontovenda.repository.ProdutoRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Service responsavel pelas regras de negocio relacionadas a Produto.
@@ -29,6 +31,11 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
+    public List<Produto> listarAtivos() {
+        return produtoRepository.findByAtivoTrue();
+    }
+
+    @Transactional(readOnly = true)
     public long contarTodos() {
         return produtoRepository.count();
     }
@@ -42,6 +49,15 @@ public class ProdutoService {
     public Produto buscarPorId(Long id) {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto", id));
+    }
+
+    @Transactional(readOnly = true)
+    public Produto buscarAtivoPorId(Long id) {
+        Produto produto = buscarPorId(id);
+        if (Boolean.FALSE.equals(produto.getAtivo())) {
+            throw new RegraDeNegocioException("O produto informado esta inativo e nao pode participar de uma venda.");
+        }
+        return produto;
     }
 
     @Transactional
@@ -78,6 +94,13 @@ public class ProdutoService {
         produtoRepository.delete(produto);
     }
 
+    @Transactional
+    public void baixarEstoque(Produto produto, int quantidade) {
+        int quantidadeAtual = Objects.requireNonNullElse(produto.getQuantidadeEstoque(), 0);
+        produto.setQuantidadeEstoque(quantidadeAtual - quantidade);
+        produtoRepository.save(produto);
+    }
+
     private void aplicarAlteracoes(Produto origem, Produto destino) {
         destino.setNome(origem.getNome());
         destino.setDescricao(origem.getDescricao());
@@ -88,21 +111,24 @@ public class ProdutoService {
     }
 
     private void validarCodigoBarrasUnico(Produto produto) {
-        String codigoBarras = produto.getCodigoBarras();
-        if (codigoBarras != null && !codigoBarras.isBlank() && produtoRepository.existsByCodigoBarras(codigoBarras)) {
-            throw traduzirViolacaoDeIntegridade(codigoBarras);
+        String codigo = produto.getCodigoBarras();
+        if (codigoBarrasPreenchido(codigo) && produtoRepository.existsByCodigoBarras(codigo)) {
+            throw traduzirViolacaoDeIntegridade(codigo);
         }
     }
 
-    private void validarCodigoBarrasUnicoParaAtualizacao(String codigoBarras, Long idAtual) {
-        if (codigoBarras != null && !codigoBarras.isBlank()
-                && produtoRepository.existsByCodigoBarrasAndIdNot(codigoBarras, idAtual)) {
-            throw traduzirViolacaoDeIntegridade(codigoBarras);
+    private void validarCodigoBarrasUnicoParaAtualizacao(String codigo, Long idAtual) {
+        if (codigoBarrasPreenchido(codigo) && produtoRepository.existsByCodigoBarrasAndIdNot(codigo, idAtual)) {
+            throw traduzirViolacaoDeIntegridade(codigo);
         }
+    }
+
+    private boolean codigoBarrasPreenchido(String codigo) {
+        return StringUtils.hasText(codigo);
     }
 
     private RegraDeNegocioException traduzirViolacaoDeIntegridade(String codigoBarras) {
-        if (codigoBarras == null || codigoBarras.isBlank()) {
+        if (!StringUtils.hasText(codigoBarras)) {
             return new RegraDeNegocioException("Nao foi possivel persistir o produto com os dados informados.");
         }
         return new RegraDeNegocioException("Ja existe um produto com o codigo de barras: " + codigoBarras);

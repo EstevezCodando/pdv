@@ -36,3 +36,6 @@ Thumbs.db
 
 # Relatorios temporarios
 reports/
+
+# Variaveis de ambiente — nunca comitar
+.env

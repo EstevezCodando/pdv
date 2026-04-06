@@ -26,7 +26,10 @@ class IntegracaoApiControllerTest {
                 4L,
                 120L,
                 new BigDecimal("3450.90"),
-                1L
+                1L,
+                8L,
+                new BigDecimal("987.54"),
+                new BigDecimal("123.44")
         );
         when(resumoIntegradoService.gerarResumo()).thenReturn(resumoEsperado);
 
